@@ -1,0 +1,64 @@
+name: Ubuntu
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-ubuntu:
+    strategy:
+      matrix:
+        include:
+          # Ubuntu 24.04 + gcc-14
+          - name: "Ubuntu 24.04 + gcc-14"
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "14"
+          # Ubuntu 24.04 + gcc-13
+          - name: "Ubuntu 24.04 + gcc-13"
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "13"
+          # Ubuntu 24.04 + gcc-12
+          - name: "Ubuntu 24.04 + gcc-12"
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "12"
+          # Ubuntu 24.04 + clang-18
+          - name: "Ubuntu 24.04 + clang-18"
+            os: ubuntu-24.04
+            compiler: clang
+            version: "18"
+          # Ubuntu 24.04 + clang-17
+          - name: "Ubuntu 24.04 + clang-17"
+            os: ubuntu-24.04
+            compiler: clang
+            version: "17"
+          # Ubuntu 24.04 + clang-16
+          - name: "Ubuntu 24.04 + clang-16"
+            os: ubuntu-24.04
+            compiler: clang
+            version: "16"
+
+    runs-on: ${{ matrix.os }}
+    name: 🐧 Build - ${{ matrix.name }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Configure Compiler
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          echo "CC=gcc-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
+        else
+          echo "CC=clang-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
+        fi
+    - name: Configure Build
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
+    - name: Build
+      run: cd build && make

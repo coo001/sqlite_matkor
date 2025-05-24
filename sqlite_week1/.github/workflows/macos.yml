@@ -1,0 +1,56 @@
+name: macOS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-macos:
+    strategy:
+      matrix:
+        include:
+          # macOS 15 + Xcode 16.3
+          - name: "macOS 15 + Xcode 16.3"
+            os: macos-15
+            compiler: xcode
+            version: "16.3"
+          # macOS 15 + Xcode 15.4
+          - name: "macOS 15 + Xcode 15.4"
+            os: macos-15
+            compiler: xcode
+            version: "15.4"
+          # macOS 15 + gcc-14
+          - name: "macOS 15 + gcc-14"
+            os: macos-15
+            compiler: gcc
+            version: "14"
+          # macOS 15 + gcc-13
+          - name: "macOS 15 + gcc-13"
+            os: macos-15
+            compiler: gcc
+            version: "13"
+
+    runs-on: ${{ matrix.os }}
+    name: 🍎 Build - ${{ matrix.name }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Configure Compiler
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          echo "CC=gcc-${{ matrix.version }}" >> $GITHUB_ENV
+          echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
+        else
+          ls -ls /Applications/
+          sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+    - name: Configure Build
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
+    - name: Build
+      run: cd build && make
